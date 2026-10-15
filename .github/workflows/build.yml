@@ -1,0 +1,42 @@
+name: Build Origin
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: First build (downloads toolchain)
+        run: pio run -e sticks3 || true
+
+      - name: Patch libnet80211 for Deauth
+        run: |
+          LIB_PATH=$(find ~/.platformio/packages -name "libnet80211.a" -path "*esp32s3*" | head -1)
+          echo "Found: $LIB_PATH"
+          if [ -z "$LIB_PATH" ]; then
+            echo "ERROR: libnet80211.a not found"
+            exit 1
+          fi
+          objcopy --weaken-symbol=ieee80211_raw_frame_sanity_check "$LIB_PATH"
+          echo "PATCHED"
+
+      - name: Build StickS3
+        run: pio run -e sticks3
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: origin-fw-sticks3
+          path: .pio/build/sticks3/firmware.bin
