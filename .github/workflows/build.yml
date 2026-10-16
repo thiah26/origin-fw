@@ -1,4 +1,4 @@
-kname: Build Origin
+name: Build Origin
 
 on:
   push:
@@ -45,3 +45,4 @@ jobs:
         with:
           name: origin-fw-sticks3
           path: .pio/build/sticks3/firmware.bin
+
