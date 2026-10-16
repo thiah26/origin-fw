@@ -1,5 +1,4 @@
-k
-ame: Build Origin
+kname: Build Origin
 
 on:
   push:
@@ -31,7 +30,6 @@ jobs:
           echo "=== Found: $LIB_PATH ==="
           if [ -z "$LIB_PATH" ]; then
             echo "ERROR: not found"
-            find ~/.platformio -type d -name "*esp32*"
             exit 1
           fi
           OBJCOPY=$(find ~/.platformio -name "xtensa-esp32s3-elf-objcopy" | head -1)
