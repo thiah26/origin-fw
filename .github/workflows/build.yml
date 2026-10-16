@@ -1,4 +1,5 @@
-name: Build Origin
+k
+ame: Build Origin
 
 on:
   push:
@@ -18,19 +19,25 @@ jobs:
       - name: Install PlatformIO
         run: pip install platformio
 
-      - name: First build (downloads toolchain)
-        run: pio run -e sticks3 || true
+      - name: First build (downloads platform + toolchain)
+        run: pio run -e sticks3
+        continue-on-error: true
 
-      - name: Patch libnet80211 for Deauth
+      - name: Patch libnet80211
         run: |
-          LIB_PATH=$(find ~/.platformio/packages -name "libnet80211.a" -path "*esp32s3*" | head -1)
-          echo "Found: $LIB_PATH"
+          echo "=== Searching ==="
+          find ~/.platformio -name "libnet80211.a" || echo "NOT FOUND"
+          LIB_PATH=$(find ~/.platformio -name "libnet80211.a" -path "*esp32s3*" | head -1)
+          echo "=== Found: $LIB_PATH ==="
           if [ -z "$LIB_PATH" ]; then
-            echo "ERROR: libnet80211.a not found"
+            echo "ERROR: not found"
+            find ~/.platformio -type d -name "*esp32*"
             exit 1
           fi
-          objcopy --weaken-symbol=ieee80211_raw_frame_sanity_check "$LIB_PATH"
-          echo "PATCHED"
+          OBJCOPY=$(find ~/.platformio -name "xtensa-esp32s3-elf-objcopy" | head -1)
+          echo "=== objcopy: $OBJCOPY ==="
+          "$OBJCOPY" --weaken-symbol=ieee80211_raw_frame_sanity_check "$LIB_PATH"
+          echo "=== PATCHED ==="
 
       - name: Build StickS3
         run: pio run -e sticks3
